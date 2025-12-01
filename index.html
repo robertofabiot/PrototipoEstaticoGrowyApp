@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrowyApp - Prototipo Final V3 (Con Historial)</title>
+    <!-- Iconos y Fuentes -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-light: #f1f5f9;
+            --white: #ffffff;
+            --text-dark: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            position: absolute;
+            width: 100%;
+            z-index: 2000;
+        }
+
+        .login-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--secondary);
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary.btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* --- APP LAYOUT --- */
+        #app-container {
+            display: none;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: white;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: #eff6ff;
+            color: var(--primary);
+        }
+
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* --- NOTIFICATIONS SYSTEM --- */
+        .notification-wrapper { position: relative; }
+        .notification-bell { position: relative; cursor: pointer; transition: transform 0.2s; }
+        .notification-bell:hover { transform: scale(1.1); }
+        .notification-badge {
+            position: absolute; top: -5px; right: -5px; background: var(--danger);
+            color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px;
+            display: flex; justify-content: center; align-items: center; border: 2px solid var(--bg-light);
+        }
+        .notification-dropdown {
+            display: none; position: absolute; top: 40px; right: 0; width: 320px;
+            background: white; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid #e2e8f0; z-index: 100; overflow: hidden; animation: slideDown 0.2s ease;
+        }
+        .notification-header { padding: 1rem; border-bottom: 1px solid #f1f5f9; font-weight: 600; display: flex; justify-content: space-between; }
+        .notification-list { max-height: 300px; overflow-y: auto; }
+        .notification-item { padding: 1rem; border-bottom: 1px solid #f8fafc; display: flex; gap: 12px; cursor: pointer; transition: background 0.2s; }
+        .notification-item:hover { background-color: #f8fafc; }
+        .notification-item.unread { background-color: #eff6ff; }
+        .notif-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .notif-content h4 { font-size: 0.9rem; margin-bottom: 2px; }
+        .notif-content p { font-size: 0.8rem; color: var(--secondary); line-height: 1.3; }
+        .notif-time { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; display: block; }
+
+        /* --- CHATBOT (AI) --- */
+        .chat-container { border: 1px solid #e2e8f0; border-radius: 0.5rem; height: 400px; display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; background: #f8fafc; }
+        .message { margin-bottom: 1rem; max-width: 80%; padding: 0.75rem 1rem; border-radius: 0.5rem; }
+        .message.user { background: var(--primary); color: white; margin-left: auto; border-bottom-right-radius: 0; }
+        .message.ai { background: white; border: 1px solid #e2e8f0; margin-right: auto; border-bottom-left-radius: 0; }
+        .chat-input { display: flex; padding: 1rem; background: white; border-top: 1px solid #e2e8f0; }
+
+        /* --- SECTIONS & CARDS --- */
+        .section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+
+        /* --- TOAST --- */
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; }
+        .toast {
+            background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex; align-items: center; gap: 10px; margin-top: 10px; border-left: 4px solid var(--primary);
+            animation: slideInRight 0.3s ease; max-width: 300px;
+        }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* --- POS & SETTINGS --- */
+        .pos-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+        .product-card { background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; cursor: pointer; transition: transform 0.2s; }
+        .product-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .cart-panel { background: white; border-radius: 1rem; padding: 1.5rem; height: fit-content; }
+        
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* --- TABLE --- */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        /* --- MODAL --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. PANTALLA DE LOGIN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="logo-text"><i class="fas fa-chart-line"></i> GrowyApp</div>
+            <p style="color: #64748b; margin-bottom: 2rem;">Sistema de Gestión Integral</p>
+            <div class="input-group">
+                <label>Correo Electrónico</label>
+                <input type="email" value="roberto@uam.edu.ni" id="emailInput">
+            </div>
+            <div class="input-group">
+                <label>Contraseña</label>
+                <input type="password" value="password123">
+            </div>
+            <button class="btn-primary" onclick="login()">Iniciar Sesión <i class="fas fa-arrow-right"></i></button>
+            <p style="margin-top: 1rem; font-size: 0.8rem; color: #94a3b8;">Lectura de user_data...</p>
+        </div>
+    </div>
+
+    <!-- 2. APLICACIÓN PRINCIPAL -->
+    <div id="app-container">
+        
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo-text" style="font-size: 1.5rem; margin-bottom: 2rem;">
+                <i class="fas fa-chart-line"></i> GrowyApp
+            </div>
+            <div class="nav-item active" onclick="showSection('dashboard', this)"><i class="fas fa-home"></i> Panel Principal</div>
+            <div class="nav-item" onclick="showSection('inventory', this)"><i class="fas fa-box"></i> Inventario</div>
+            <div class="nav-item" onclick="showSection('billing', this)"><i class="fas fa-cash-register"></i> Facturación</div>
+            <div class="nav-item" onclick="showSection('history', this)"><i class="fas fa-history"></i> Historial</div>
+            <div class="nav-item" onclick="showSection('ai', this)"><i class="fas fa-robot"></i> Business AI <span class="badge badge-warning" style="margin-left: auto; font-size: 0.6rem;">PRO</span></div>
+            <div class="nav-item" onclick="showSection('settings', this)"><i class="fas fa-cog"></i> Configuración</div>
+            <div class="nav-item" style="margin-top: auto; color: var(--danger);" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="header">
+                <h2 id="page-title">Panel Principal</h2>
+                <div class="user-profile">
+                    <!-- NOTIFICACIONES -->
+                    <div class="notification-wrapper">
+                        <div class="notification-bell" onclick="toggleNotifications()">
+                            <i class="fas fa-bell" style="font-size: 1.2rem; color: var(--secondary);"></i>
+                            <div class="notification-badge" id="notif-count">3</div>
+                        </div>
+                        <div class="notification-dropdown" id="notification-dropdown">
+                            <div class="notification-header"><span>Notificaciones</span><span style="font-size: 0.8rem; color: var(--primary); cursor: pointer;">Marcar leídas</span></div>
+                            <div class="notification-list">
+                                <div class="notification-item unread">
+                                    <div class="notif-icon" style="background: #fee2e2; color: #991b1b;"><i class="fas fa-exclamation-triangle"></i></div>
+                                    <div class="notif-content"><h4>Stock Crítico: Jeans</h4><p>Quedan menos de 5 unidades.</p><span class="notif-time">Hace 10 min</span></div>
+                                </div>
+                                <div class="notification-item unread">
+                                    <div class="notif-icon" style="background: #e0e7ff; color: #3730a3;"><i class="fas fa-magic"></i></div>
+                                    <div class="notif-content"><h4>Reporte Semanal IA</h4><p>Análisis de predicción listo.</p><span class="notif-time">Hace 1 hora</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- PERFIL -->
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600;" id="user-display-name">Roberto Tercero</div>
+                        <div style="font-size: 0.8rem; color: var(--secondary);">UAM Student</div>
+                    </div>
+                    <div class="avatar">RT</div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 1: DASHBOARD -->
+            <div id="dashboard" class="section active">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="card">
+                        <h3 style="font-size: 0.9rem; color: var(--secondary);">Ventas Hoy</h3>
+                        <div style="font-size: 2rem; font-weight: 700;">$2,450.00</div>
+                        <div style="color: var(--success); font-size: 0.8rem;">+15% vs ayer</div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size: 0.9rem; color: var(--secondary);">Transacciones</h3>
+                        <div style="font-size: 2rem; font-weight: 700;">12</div>
+                        <div style="font-size: 0.8rem;">En billing_data</div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size: 0.9rem; color: var(--secondary);">Alertas Activas</h3>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--danger);">1</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Resumen de Inventario</h3>
+                    <div style="height: 150px; background: #f8fafc; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; border: 2px dashed #e2e8f0; margin-top: 1rem;">
+                        <span style="color: #94a3b8;"><i class="fas fa-chart-area"></i> Gráfico de Ventas Semanales</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: INVENTARIO -->
+            <div id="inventory" class="section">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <div><button class="btn-primary" onclick="openModal('modal-product')" style="width: auto;"><i class="fas fa-plus"></i> Nuevo Producto</button></div>
+                    <input type="text" placeholder="Buscar en inventory_data..." style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ccc;">
+                </div>
+                <div class="card table-container">
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Nombre</th><th>Stock</th><th>Precio</th><th>Estado</th><th>Acción</th></tr>
+                        </thead>
+                        <tbody id="inventory-body">
+                            <tr><td>P-001</td><td>Camisa Polo</td><td>45</td><td>$25.00</td><td><span class="badge badge-success">Normal</span></td><td><i class="fas fa-ellipsis-h"></i></td></tr>
+                            <tr><td>P-002</td><td>Jeans Slim</td><td style="color: var(--danger); font-weight: bold;">4</td><td>$45.00</td><td><span class="badge badge-danger">Bajo</span></td><td><i class="fas fa-ellipsis-h"></i></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 3: FACTURACIÓN (POS) -->
+            <div id="billing" class="section">
+                <div class="pos-grid">
+                    <div>
+                        <div class="product-grid">
+                            <div class="product-card" onclick="addToCart('Camisa Polo', 25.00)"><h4>Camisa Polo</h4><p style="color: var(--primary); font-weight: bold;">$25.00</p></div>
+                            <div class="product-card" onclick="addToCart('Jeans Slim', 45.00)"><h4>Jeans Slim</h4><p style="color: var(--primary); font-weight: bold;">$45.00</p></div>
+                            <div class="product-card" onclick="addToCart('Zapatos', 60.00)"><h4>Zapatos</h4><p style="color: var(--primary); font-weight: bold;">$60.00</p></div>
+                        </div>
+                    </div>
+                    <div class="cart-panel">
+                        <h3>Orden Actual</h3>
+                        <div id="cart-items" style="height: 200px; overflow-y: auto; margin: 1rem 0;"><p style="text-align: center; color: #ccc;">Vacío</p></div>
+                        <h2 id="cart-total">$0.00</h2>
+                        <button class="btn-primary" onclick="processSale()">Cobrar (Generar Factura)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NUEVA SECCIÓN 4: HISTORIAL DE FACTURAS -->
+            <div id="history" class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="margin-bottom: 0.5rem;">Registro de Ventas (billing_data)</h3>
+                        <p style="color: var(--secondary); font-size: 0.9rem;">Consulta y exportación de facturas generadas.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                         <input type="date" style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ccc;">
+                         <button class="btn-primary btn-sm" onclick="showToast('Filtrando por fecha...', 'info')"><i class="fas fa-filter"></i> Filtrar</button>
+                    </div>
+                </div>
+
+                <div class="card table-container">
+                    <table id="invoice-table">
+                        <thead>
+                            <tr>
+                                <th>ID Factura</th>
+                                <th>Fecha y Hora</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Datos simulados de billing_data -->
+                            <tr>
+                                <td>#FAC-2025-001</td>
+                                <td>29/11/2025 10:30 AM</td>
+                                <td>Juan Pérez</td>
+                                <td>$45.00</td>
+                                <td><span class="badge badge-success">Pagado</span></td>
+                                <td>
+                                    <button class="btn-primary btn-sm" onclick="showToast('Exportando PDF...', 'info')"><i class="fas fa-download"></i></button>
+                                    <button class="btn-primary btn-sm" style="background: var(--secondary);" onclick="alert('Detalle de Productos: \n1x Jeans Slim - $45.00')"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#FAC-2025-002</td>
+                                <td>29/11/2025 11:15 AM</td>
+                                <td>María López</td>
+                                <td>$25.00</td>
+                                <td><span class="badge badge-success">Pagado</span></td>
+                                <td>
+                                    <button class="btn-primary btn-sm" onclick="showToast('Exportando PDF...', 'info')"><i class="fas fa-download"></i></button>
+                                    <button class="btn-primary btn-sm" style="background: var(--secondary);" onclick="alert('Detalle de Productos: \n1x Camisa Polo - $25.00')"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#FAC-2025-003</td>
+                                <td>29/11/2025 02:45 PM</td>
+                                <td>Consumidor Final</td>
+                                <td>$120.00</td>
+                                <td><span class="badge badge-success">Pagado</span></td>
+                                <td>
+                                    <button class="btn-primary btn-sm" onclick="showToast('Exportando PDF...', 'info')"><i class="fas fa-download"></i></button>
+                                    <button class="btn-primary btn-sm" style="background: var(--secondary);" onclick="alert('Detalle de Productos: \n2x Zapatos - $120.00')"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 5: BUSINESS AI -->
+            <div id="ai" class="section">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <!-- Columna 1: Chatbot -->
+                    <div class="card">
+                        <h3><i class="fas fa-sparkles" style="color: var(--primary);"></i> Asistente IA Gemini</h3>
+                        <p style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 1rem;">Consulta datos de billing_data e inventory_data.</p>
+                        <div class="chat-container">
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="message ai">Hola Roberto, he analizado tus ventas de hoy. ¿Qué te gustaría saber?</div>
+                            </div>
+                            <div class="chat-input">
+                                <input type="text" id="chat-input" placeholder="Ej: ¿Qué producto vendí más?" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.5rem; margin-right: 0.5rem;">
+                                <button class="btn-primary" style="width: auto;" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna 2: Reportes y Métricas Visuales -->
+                    <div class="card">
+                        <h3>Recomendaciones y Predicciones</h3>
+                        <div style="margin-top: 1rem; padding: 1rem; background: #eff6ff; border-left: 4px solid var(--primary); border-radius: 0.25rem;">
+                            <h4>Tendencia Detectada</h4>
+                            <p style="font-size: 0.9rem;">Las ventas de "Jeans" aumentan los viernes. <br><strong>Sugerencia:</strong> Aumentar stock en 15% para la próxima semana.</p>
+                        </div>
+                        <div style="margin-top: 1rem; padding: 1rem; background: #fff7ed; border-left: 4px solid #f97316; border-radius: 0.25rem;">
+                            <h4>Alerta de Stock (ai_reports)</h4>
+                            <p style="font-size: 0.9rem;">El producto "Jeans Slim Fit" está por agotarse. Se ha notificado al proveedor.</p>
+                        </div>
+                        <div style="margin-top: 2rem;">
+                            <h4>Predicción de Ingresos (Semana Próxima)</h4>
+                            <div style="display: flex; align-items: flex-end; height: 100px; gap: 10px; margin-top: 10px;">
+                                <div style="width: 20%; background: #cbd5e1; height: 40%;">L</div>
+                                <div style="width: 20%; background: #cbd5e1; height: 50%;">M</div>
+                                <div style="width: 20%; background: #cbd5e1; height: 60%;">X</div>
+                                <div style="width: 20%; background: var(--primary); height: 90%; position: relative;">J</div>
+                                <div style="width: 20%; background: #cbd5e1; height: 75%;">V</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 6: CONFIGURACIÓN -->
+            <div id="settings" class="section">
+                <h2 style="margin-bottom: 1.5rem;">Configuración del Sistema</h2>
+                <div class="settings-grid">
+                    <div class="card">
+                        <h3 style="margin-bottom: 1rem;">Datos del Usuario</h3>
+                        <div class="input-group"><label>Nombre</label><input type="text" value="Roberto Tercero"></div>
+                        <div class="input-group"><label>Negocio</label><input type="text" value="TecnoStore UAM"></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin-bottom: 1rem;">Preferencias</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div><h4>Notificaciones Push</h4><p style="font-size: 0.8rem; color: var(--secondary);">Alertas de stock</p></div>
+                            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+                        </div>
+                        <div class="input-group">
+                            <label>Moneda Principal</label>
+                            <select><option>USD ($)</option><option>Córdoba (C$)</option></select>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <button class="btn-primary" style="width: auto; display: inline-flex;" onclick="saveSettings()"><i class="fas fa-save"></i> Guardar Cambios</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO PRODUCTO -->
+    <div id="modal-product" class="modal">
+        <div class="modal-content">
+            <h3>Registrar Producto</h3>
+            <div class="input-group" style="margin-top: 1rem;"><label>Nombre</label><input type="text" id="prod-name"></div>
+            <div class="input-group"><label>Precio</label><input type="number" id="prod-price"></div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn-primary" onclick="addProduct()">Guardar</button>
+                <button class="btn-primary" style="background: var(--secondary);" onclick="document.getElementById('modal-product').style.display='none'">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        // --- NAVEGACIÓN ---
+        function login() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            showToast("Bienvenido. Datos sincronizados.", "info");
+        }
+        function logout() {
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+        }
+        function showSection(sectionId, element) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            element.classList.add('active');
+            
+            const titles = {
+                'dashboard': 'Panel Principal',
+                'inventory': 'Gestión de Inventario',
+                'billing': 'Facturación y POS',
+                'history': 'Historial de Facturas',
+                'ai': 'Inteligencia de Negocios',
+                'settings': 'Configuración'
+            };
+            document.getElementById('page-title').innerText = titles[sectionId];
+        }
+
+        // --- NOTIFICACIONES ---
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+            if (dropdown.style.display === 'block') document.getElementById('notif-count').style.display = 'none';
+        }
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            let icon = type === 'warning' ? 'exclamation-triangle' : (type === 'info' ? 'info-circle' : 'check-circle');
+            let color = type === 'warning' ? 'var(--warning)' : (type === 'info' ? 'var(--primary)' : 'var(--success)');
+            toast.style.borderLeftColor = color;
+            toast.innerHTML = `<i class="fas fa-${icon}" style="color: ${color}; font-size: 1.2rem;"></i><div><h4 style="font-size: 0.9rem; margin:0;">Notificación</h4><p style="font-size: 0.8rem; margin:0; color: #64748b;">${message}</p></div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove() }, 3000);
+        }
+
+        // --- CHATBOT (AI) ---
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value;
+            if(!text) return;
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML += `<div class="message user">${text}</div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+            setTimeout(() => {
+                chatBox.innerHTML += `<div class="message ai">He procesado tu consulta sobre "${text}" utilizando los datos de <strong>inventory_data</strong> y <strong>billing_data</strong>. Aquí tienes los resultados...</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 1000);
+        }
+
+        // --- FUNCIONES DE NEGOCIO ---
+        function saveSettings() { showToast("Configuración guardada en user_data."); }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function addProduct() {
+            const name = document.getElementById('prod-name').value;
+            const price = document.getElementById('prod-price').value;
+            if(name && price) {
+                document.getElementById('inventory-body').innerHTML += `<tr><td>P-NEW</td><td>${name}</td><td>10</td><td>$${price}</td><td><span class="badge badge-success">Nuevo</span></td><td>...</td></tr>`;
+                document.getElementById('modal-product').style.display = 'none';
+                showToast("Producto agregado.");
+            }
+        }
+        
+        let cartTotal = 0;
+        let cartItems = [];
+
+        function addToCart(name, price) {
+            cartTotal += price;
+            cartItems.push(name);
+            document.getElementById('cart-items').innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:5px;"><span>${name}</span><span>$${price}</span></div>`;
+            document.getElementById('cart-total').innerText = `$${cartTotal.toFixed(2)}`;
+        }
+        
+        function processSale() {
+            if(cartTotal > 0) {
+                // Simulación: Agregar al historial visualmente
+                const tbody = document.querySelector('#invoice-table tbody');
+                const newRow = `<tr>
+                    <td>#FAC-NEW</td>
+                    <td>Ahora</td>
+                    <td>Consumidor Final</td>
+                    <td>$${cartTotal.toFixed(2)}</td>
+                    <td><span class="badge badge-success">Pagado</span></td>
+                    <td>
+                        <button class="btn-primary btn-sm" onclick="showToast('Exportando PDF...', 'info')"><i class="fas fa-download"></i></button>
+                        <button class="btn-primary btn-sm" style="background: var(--secondary);" onclick="alert('Detalle: ${cartItems.join(', ')}')"><i class="fas fa-eye"></i></button>
+                    </td>
+                </tr>`;
+                tbody.insertAdjacentHTML('afterbegin', newRow);
+
+                showToast("Venta registrada en billing_data."); 
+                document.getElementById('cart-items').innerHTML = '<p style="text-align: center; color: #ccc;">Vacío</p>'; 
+                document.getElementById('cart-total').innerText = '$0.00'; 
+                cartTotal = 0;
+                cartItems = [];
+            }
+            else { alert("Carrito vacío"); }
+        }
+        
+        window.onclick = function(e) {
+            if (!e.target.closest('.notification-bell') && !e.target.closest('.notification-dropdown')) document.getElementById('notification-dropdown').style.display = 'none';
+            if (e.target.classList.contains('modal')) e.target.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
