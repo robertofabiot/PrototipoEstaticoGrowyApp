@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GrowyApp - Prototipo Final V3 (Con Historial)</title>
+    <title>GrowyApp - Prototipo Final V4 (Con Clientes)</title>
     <!-- Iconos y Fuentes -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -286,6 +286,7 @@
             </div>
             <div class="nav-item active" onclick="showSection('dashboard', this)"><i class="fas fa-home"></i> Panel Principal</div>
             <div class="nav-item" onclick="showSection('inventory', this)"><i class="fas fa-box"></i> Inventario</div>
+            <div class="nav-item" onclick="showSection('clients', this)"><i class="fas fa-users"></i> Clientes</div> <!-- NUEVA PESTAÑA -->
             <div class="nav-item" onclick="showSection('billing', this)"><i class="fas fa-cash-register"></i> Facturación</div>
             <div class="nav-item" onclick="showSection('history', this)"><i class="fas fa-history"></i> Historial</div>
             <div class="nav-item" onclick="showSection('ai', this)"><i class="fas fa-robot"></i> Business AI <span class="badge badge-warning" style="margin-left: auto; font-size: 0.6rem;">PRO</span></div>
@@ -372,6 +373,39 @@
                 </div>
             </div>
 
+            <!-- NUEVA SECCIÓN: CLIENTES -->
+            <div id="clients" class="section">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <div>
+                        <button class="btn-primary" onclick="openModal('modal-client')" style="width: auto;"><i class="fas fa-user-plus"></i> Crear Cliente</button>
+                    </div>
+                    <input type="text" placeholder="Buscar cliente..." style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ccc;">
+                </div>
+                <div class="card table-container">
+                    <table>
+                        <thead>
+                            <tr><th>ID Cliente</th><th>Nombre Completo</th><th>Teléfono</th><th>Correo</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="clients-body">
+                            <tr>
+                                <td>C-001</td>
+                                <td>Juan Pérez</td>
+                                <td>8888-0000</td>
+                                <td>juan@email.com</td>
+                                <td><i class="fas fa-edit" style="color: var(--primary); cursor:pointer;"></i></td>
+                            </tr>
+                            <tr>
+                                <td>C-002</td>
+                                <td>María López</td>
+                                <td>8888-1111</td>
+                                <td>maria@email.com</td>
+                                <td><i class="fas fa-edit" style="color: var(--primary); cursor:pointer;"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- SECCIÓN 3: FACTURACIÓN (POS) -->
             <div id="billing" class="section">
                 <div class="pos-grid">
@@ -384,6 +418,14 @@
                     </div>
                     <div class="cart-panel">
                         <h3>Orden Actual</h3>
+                        <div class="input-group" style="margin-bottom: 1rem;">
+                            <!-- Ahora este input tiene datalist para sugerir clientes creados -->
+                            <input type="text" list="clients-list" placeholder="Cliente (Buscar o Escribir)" id="client-name">
+                            <datalist id="clients-list">
+                                <option value="Juan Pérez">
+                                <option value="María López">
+                            </datalist>
+                        </div>
                         <div id="cart-items" style="height: 200px; overflow-y: auto; margin: 1rem 0;"><p style="text-align: center; color: #ccc;">Vacío</p></div>
                         <h2 id="cart-total">$0.00</h2>
                         <button class="btn-primary" onclick="processSale()">Cobrar (Generar Factura)</button>
@@ -391,7 +433,7 @@
                 </div>
             </div>
 
-            <!-- NUEVA SECCIÓN 4: HISTORIAL DE FACTURAS -->
+            <!-- SECCIÓN 4: HISTORIAL DE FACTURAS -->
             <div id="history" class="section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <div>
@@ -541,6 +583,29 @@
         </div>
     </div>
 
+    <!-- NUEVO MODAL: CREAR CLIENTE -->
+    <div id="modal-client" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-user-plus"></i> Nuevo Cliente</h3>
+            <div class="input-group" style="margin-top: 1rem;">
+                <label>Nombre Completo</label>
+                <input type="text" id="client-new-name" placeholder="Ej: Roberto Ramírez">
+            </div>
+            <div class="input-group">
+                <label>Teléfono</label>
+                <input type="text" id="client-new-phone" placeholder="Ej: 8888-8888">
+            </div>
+            <div class="input-group">
+                <label>Correo Electrónico (Opcional)</label>
+                <input type="email" id="client-new-email" placeholder="cliente@email.com">
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn-primary" onclick="addClient()">Registrar</button>
+                <button class="btn-primary" style="background: var(--secondary);" onclick="document.getElementById('modal-client').style.display='none'">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container" class="toast-container"></div>
 
@@ -564,6 +629,7 @@
             const titles = {
                 'dashboard': 'Panel Principal',
                 'inventory': 'Gestión de Inventario',
+                'clients': 'Gestión de Clientes', // Nuevo título
                 'billing': 'Facturación y POS',
                 'history': 'Historial de Facturas',
                 'ai': 'Inteligencia de Negocios',
@@ -608,6 +674,8 @@
         // --- FUNCIONES DE NEGOCIO ---
         function saveSettings() { showToast("Configuración guardada en user_data."); }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        
+        // --- LOGICA PRODUCTOS ---
         function addProduct() {
             const name = document.getElementById('prod-name').value;
             const price = document.getElementById('prod-price').value;
@@ -615,6 +683,40 @@
                 document.getElementById('inventory-body').innerHTML += `<tr><td>P-NEW</td><td>${name}</td><td>10</td><td>$${price}</td><td><span class="badge badge-success">Nuevo</span></td><td>...</td></tr>`;
                 document.getElementById('modal-product').style.display = 'none';
                 showToast("Producto agregado.");
+            }
+        }
+
+        // --- NUEVA LOGICA DE CLIENTES ---
+        function addClient() {
+            const name = document.getElementById('client-new-name').value;
+            const phone = document.getElementById('client-new-phone').value;
+            const email = document.getElementById('client-new-email').value || "No registrado";
+
+            if(name && phone) {
+                // 1. Agregar a la tabla visual
+                const tbody = document.getElementById('clients-body');
+                tbody.innerHTML += `<tr>
+                    <td>C-NEW</td>
+                    <td>${name}</td>
+                    <td>${phone}</td>
+                    <td>${email}</td>
+                    <td><i class="fas fa-edit" style="color: var(--primary); cursor:pointer;"></i></td>
+                </tr>`;
+
+                // 2. Agregar al Datalist del POS para autocompletado
+                const datalist = document.getElementById('clients-list');
+                datalist.innerHTML += `<option value="${name}">`;
+
+                // 3. Cerrar y notificar
+                document.getElementById('modal-client').style.display = 'none';
+                showToast(`Cliente ${name} registrado correctamente.`);
+                
+                // Limpiar campos
+                document.getElementById('client-new-name').value = '';
+                document.getElementById('client-new-phone').value = '';
+                document.getElementById('client-new-email').value = '';
+            } else {
+                alert("Por favor ingresa al menos el Nombre y Teléfono.");
             }
         }
         
@@ -630,12 +732,14 @@
         
         function processSale() {
             if(cartTotal > 0) {
+                const clientName = document.getElementById('client-name').value || "Consumidor Final";
+                
                 // Simulación: Agregar al historial visualmente
                 const tbody = document.querySelector('#invoice-table tbody');
                 const newRow = `<tr>
                     <td>#FAC-NEW</td>
                     <td>Ahora</td>
-                    <td>Consumidor Final</td>
+                    <td>${clientName}</td>
                     <td>$${cartTotal.toFixed(2)}</td>
                     <td><span class="badge badge-success">Pagado</span></td>
                     <td>
@@ -645,9 +749,10 @@
                 </tr>`;
                 tbody.insertAdjacentHTML('afterbegin', newRow);
 
-                showToast("Venta registrada en billing_data."); 
+                showToast(`Venta registrada para ${clientName}.`); 
                 document.getElementById('cart-items').innerHTML = '<p style="text-align: center; color: #ccc;">Vacío</p>'; 
                 document.getElementById('cart-total').innerText = '$0.00'; 
+                document.getElementById('client-name').value = ''; // Reset cliente
                 cartTotal = 0;
                 cartItems = [];
             }
